@@ -1,0 +1,211 @@
+# AD-Automaton Default Configuration
+# This file contains default settings for the AD-Automaton framework
+
+# Current OPSEC profile (stealth, normal, noisy)
+opsec_profile: normal
+
+# Tool configurations
+tools:
+  nmap:
+    path: nmap
+    timing_template: -T3
+    max_rate: 1000
+    ping_sweep_args: -sn
+    port_scan_args: -sV --open -p-
+    script_args: --script-timeout=30s
+    output_format: -oX
+
+  crackmapexec:
+    path: crackmapexec
+    threads: 50
+    timeout: 30
+    delay: 0
+    
+  impacket:
+    base_path: /usr/share/doc/python3-impacket/examples
+    secretsdump_path: impacket-secretsdump
+    getuserspns_path: impacket-GetUserSPNs
+    ntlmrelayx_path: impacket-ntlmrelayx
+    psexec_path: impacket-psexec
+    wmiexec_path: impacket-wmiexec
+    
+  responder:
+    path: responder
+    config_file: /etc/responder/Responder.conf
+    log_dir: /var/log/responder
+    interface: eth0
+    
+  mitm6:
+    path: mitm6
+    log_file: /tmp/mitm6.log
+    
+  certipy:
+    path: certipy
+    timeout: 60
+    
+  enum4linux_ng:
+    path: enum4linux-ng
+    timeout: 120
+    
+  smbclient:
+    path: smbclient
+    timeout: 30
+    
+  ldapsearch:
+    path: ldapsearch
+    timeout: 30
+    
+  dig:
+    path: dig
+    timeout: 10
+    
+  nslookup:
+    path: nslookup
+    timeout: 10
+    
+  nltest:
+    path: nltest
+    timeout: 30
+
+# Network settings
+network:
+  timeout: 30
+  retries: 3
+  concurrent_threads: 10
+  dns_servers:
+    - 8.8.8.8
+    - 8.8.4.4
+
+# Database settings
+database:
+  backup_frequency: 1h
+  max_backups: 5
+  enable_wal: true
+
+# Reporting settings
+reporting:
+  include_screenshots: true
+  include_raw_output: false
+  redact_credentials: true
+  output_formats:
+    - markdown
+    - csv
+    - json
+
+# Feature flags
+features:
+  enable_responder: true
+  enable_mitm6: true
+  enable_coercion: false
+  smb_enumeration_method: auto
+  enable_kerberoasting: true
+  enable_timeroasting: true
+  enable_dns_zone_transfer: true
+  enable_ldap_enumeration: true
+
+# Logging settings
+logging:
+  level: INFO
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+  max_log_size: 50MB
+  backup_count: 5
+
+# Output directories
+output:
+  base_dir: ./output
+  screenshots_dir: ./output/screenshots
+  logs_dir: ./output/logs
+  reports_dir: ./output/reports
+  raw_output_dir: ./output/raw
+
+# OPSEC profile definitions (applied dynamically)
+profiles:
+  stealth:
+    description: "Minimal footprint, slower scans, avoid detection"
+    tools:
+      nmap:
+        timing_template: -T1
+        max_rate: 100
+        additional_args: "--randomize-hosts --source-port 53"
+      crackmapexec:
+        threads: 5
+        delay: 2
+    features:
+      enable_responder: false
+      enable_mitm6: false
+      enable_coercion: false
+      smb_enumeration_method: samr_only
+    network:
+      concurrent_threads: 3
+      timeout: 60
+
+  normal:
+    description: "Balanced approach between speed and stealth"
+    tools:
+      nmap:
+        timing_template: -T3
+        max_rate: 1000
+      crackmapexec:
+        threads: 25
+        delay: 0
+    features:
+      enable_responder: true
+      enable_mitm6: true
+      enable_coercion: false
+      smb_enumeration_method: auto
+    network:
+      concurrent_threads: 10
+
+  noisy:
+    description: "Maximum speed, all techniques enabled"
+    tools:
+      nmap:
+        timing_template: -T4
+        max_rate: 5000
+        additional_args: "--min-parallelism 100"
+      crackmapexec:
+        threads: 100
+        delay: 0
+    features:
+      enable_responder: true
+      enable_mitm6: true
+      enable_coercion: true
+      smb_enumeration_method: lsa_brute
+    network:
+      concurrent_threads: 50
+
+# Domain-specific settings (will be populated during reconnaissance)
+domain:
+  name: null
+  domain_controllers: []
+  dns_servers: []
+  forest_functional_level: null
+  domain_functional_level: null
+
+# Advanced settings
+advanced:
+  # Maximum time to spend on each phase (in minutes)
+  phase_timeouts:
+    reconnaissance: 60
+    enumeration: 120
+    mitm: 30
+    adcs: 45
+    
+  # Automatic progression settings
+  auto_progression:
+    enabled: true
+    require_credentials_for_enum: true
+    require_admin_for_dcsync: true
+    
+  # Error handling
+  error_handling:
+    max_retries: 3
+    retry_delay: 5
+    continue_on_tool_failure: true
+    
+  # Resource limits
+  resource_limits:
+    max_memory_mb: 2048
+    max_processes: 50
+    max_open_files: 1000 
