@@ -551,6 +551,40 @@ class DNSParser(BaseParser):
         self.logger.info(f"Parsed {len(hosts)} hosts from DNS zone transfer")
         return hosts
 
+class KerbruteParser(BaseParser):
+    """Parser for kerbrute output."""
+    
+    def parse_spray_output(self, output: str, domain: str) -> List[Credential]:
+        """
+        Parse kerbrute password spray output for successful credentials.
+        
+        Args:
+            output: Raw kerbrute output
+            domain: Domain name
+            
+        Returns:
+            List of successful credentials
+        """
+        credentials = []
+        
+        # Look for successful authentication lines in kerbrute output
+        success_pattern = r'\[VALID\]\s+(\S+)@\S+:(\S+)'
+        
+        for match in re.finditer(success_pattern, output):
+            username, password = match.groups()
+            
+            credential = Credential(
+                username=username,
+                domain=domain,
+                password=password,
+                source_tool='kerbrute'
+            )
+            
+            credentials.append(credential)
+            self.logger.info(f"Parsed successful kerbrute credential: {domain}\\{username}")
+        
+        return credentials
+
 class LDAPParser(BaseParser):
     """Parser for LDAP enumeration output."""
     
@@ -707,7 +741,8 @@ def get_parser(tool_name: str) -> BaseParser:
         'certipy': CertipyParser,
         'ldapsearch': LDAPParser,
         'enum4linux': SMBParser,
-        'dns': DNSParser
+        'dns': DNSParser,
+        'kerbrute': KerbruteParser
     }
     
     parser_class = parsers.get(tool_name.lower())

